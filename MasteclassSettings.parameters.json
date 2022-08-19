@@ -9,7 +9,7 @@
       "value": "CORP.ACME.COM"
     },
     "adminPassword": {
-      "value": "Pa55w.rd1234"
+      "value": "securestring"
     },
     "vmSize": {
       "value": "Standard_B2s"
