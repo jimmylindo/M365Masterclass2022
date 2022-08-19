@@ -8,6 +8,9 @@
     "domainName": {
       "value": "CORP.ACME.COM"
     },
+    "adminPassword": {
+      "value": "Pa55w.rd1234"
+    },
     "vmSize": {
       "value": "Standard_D2s_v3"
     },
