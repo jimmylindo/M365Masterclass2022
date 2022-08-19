@@ -105,7 +105,14 @@
             "metadata": {
                 "description": "Availability set name."
             }
-        }
+        },
+        "assetLocation-dc01": {
+            "type": "string",
+            "metadata": {
+              "description": "The location of resources such as templates and DSC modules that the script is dependent"
+            },
+            "defaultValue": "https://raw.githubusercontent.com/jimmylindo/M365Masterclass2022/main/ACME-DC01Config/"
+          }
     },
     "resources": [
         {
@@ -261,7 +268,29 @@
                             }
                         }
                     }
-                }
+                },
+
+                {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "ACME-DC01/CustomScript",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                      "[resourceId('Microsoft.Compute/virtualMachines', parameters('acme-dc01Name'))]",
+                      "[concat('Microsoft.Compute/virtualMachines/',parameters('acme-dc01Name'),'/extensions/CreateADPDC')]"
+                    ],
+                    "properties": {
+                      "publisher": "Microsoft.Compute",
+                      "type": "CustomScriptExtension",
+                      "typeHandlerVersion": "1.4",
+                      "settings": {
+                        "fileUris": [
+                          "[concat(parameters('assetLocation-dc01'),'acme-dc01.ps1')]"
+                        ],
+                        "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File acme-dc01.ps1"
+                      }
+                    }
+                  }
             ]
         },
         {
