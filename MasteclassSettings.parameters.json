@@ -9,7 +9,7 @@
       "value": "Pa55w.rd1234"
     },
     "domainName": {
-      "value": "ADATUM.COM"
+      "value": "CORP.ACME.COM"
     },
     "vmSize": {
       "value": "Standard_D2s_v3"
@@ -24,7 +24,7 @@
       "value": "10.0.0.0/16"
     },
     "networkInterfaceName": {
-      "value": "M365-nic1"
+      "value": "M365-dc01-nic1"
     },
     "privateIPAddress": {
       "value": "10.0.0.4"
