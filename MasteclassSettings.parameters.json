@@ -3,10 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
-      "value": "m365admin"
-    },
-    "adminPassword": {
-      "value": "Pa55w.rd1234"
+      "value": "sysadmin"
     },
     "domainName": {
       "value": "CORP.ACME.COM"
@@ -15,7 +12,7 @@
       "value": "Standard_D2s_v3"
     },
     "virtualMachineName": {
-      "value": "M365-dc01"
+      "value": "ACME-dc01"
     },
     "virtualNetworkName": {
       "value": "M365-VNet1"
@@ -24,7 +21,7 @@
       "value": "10.0.0.0/16"
     },
     "networkInterfaceName": {
-      "value": "M365-dc01-nic1"
+      "value": "ACME-dc01-nic1"
     },
     "privateIPAddress": {
       "value": "10.0.0.4"
@@ -36,7 +33,7 @@
       "value": "10.0.0.0/24"
     },
     "availabilitySetName": {
-      "value": "M365-dc-advset1"
+      "value": "ACME-dc-advset1"
     }
   }
 }
