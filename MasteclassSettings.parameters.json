@@ -12,13 +12,13 @@
       "value": "Pa55w.rd1234"
     },
     "vmSize": {
-      "value": "Standard_D2s_v3"
+      "value": "Standard_B2s"
     },
     "virtualMachineName": {
       "value": "ACME-dc01"
     },
     "virtualNetworkName": {
-      "value": "M365-VNet1"
+      "value": "ACME-VNet1"
     },
     "virtualNetworkAddressRange": {
       "value": "10.0.0.0/16"
