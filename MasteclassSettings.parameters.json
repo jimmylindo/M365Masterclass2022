@@ -14,12 +14,7 @@
     "vmSize": {
       "value": "Standard_D2s_v3"
     },
-    "_artifactsLocation": {
-      "value": "[deployment().properties.templateLink.uri]"
-    },
-    "_artifactsLocationSasToken": {
-      "value": null
-    },
+
     "location": {
       "value": "[resourceGroup().location]"
     },
