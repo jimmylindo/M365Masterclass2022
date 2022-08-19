@@ -9,7 +9,7 @@
       "value": "Pa55w.rd1234"
     },
     "domainName": {
-      "value": "CORP.CONTOSO.COM"
+      "value": "ADATUM.COM"
     },
     "vmSize": {
       "value": "Standard_D2s_v3"
