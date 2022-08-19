@@ -4,6 +4,7 @@
     "parameters": {
         "adminUsername": {
             "type": "string",
+            "defaultValue": "sysadmin",
             "metadata": {
                 "description": "The name of the administrator account of the new VM and domain"
             }
@@ -16,6 +17,7 @@
         },
         "domainName": {
             "type": "string",
+            "defaultValue": "CORP.ACME.COM",
             "metadata": {
                 "description": "The FQDN of the Active Directory Domain to be created"
             }
@@ -196,8 +198,8 @@
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "2019-Datacenter",
-                        "version": "17763.3131.220505"
+                        "sku": "2022-datacenter-azure-edition",
+                        "version": "Latest"
                     },
                     "osDisk": {
                         "name": "[concat(parameters('virtualMachineName'),'_OSDisk')]",
