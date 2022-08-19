@@ -9,7 +9,7 @@
       "value": "Pa55w.rd1234"
     },
     "domainName": {
-      "value": null
+      "value": "CORP.CONTOSO.COM"
     },
     "vmSize": {
       "value": "Standard_D2s_v3"
