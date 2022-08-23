@@ -26,6 +26,9 @@
     "networkInterfaceName": {
       "value": "ACME-dc01-nic1"
     },
+    "networkInterfaceName-me01": {
+      "value": "ACME-me01-nic1"
+    },
     "privateIPAddress": {
       "value": "10.0.0.4"
     },
@@ -37,6 +40,9 @@
     },
     "availabilitySetName": {
       "value": "ACME-dc-advset1"
+    },
+    "dnsPrefix": {
+      "value": "GEN-UNIQUE"
     }
   }
 }
