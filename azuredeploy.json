@@ -470,7 +470,7 @@
               {
                 "name": "ACME-ME01/JoinDomain",
                 "type": "Microsoft.Compute/virtualMachines/extensions",
-                "location": "[parameters('location')]",
+                "location": "[resourceGroup().location]",
                 "apiVersion": "2021-03-01",
                 "dependsOn": [
                   "[resourceId('Microsoft.Compute/virtualMachines', parameters('acme-me01Name'))]"
