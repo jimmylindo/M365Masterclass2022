@@ -276,8 +276,8 @@
                     "apiVersion": "2015-06-15",
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
-                      "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-                      "[concat('Microsoft.Compute/virtualMachines/',parameters('virtualMachineName'),'/extensions/CreateADPDC')]"
+                      "[resourceId('Microsoft.Compute/virtualMachines', parameters('acme-dc01Name'))]",
+                      "[concat('Microsoft.Compute/virtualMachines/',parameters('acme-dc01Name'),'/extensions/CreateADPDC')]"
                     ],
                     "properties": {
                       "publisher": "Microsoft.Compute",
