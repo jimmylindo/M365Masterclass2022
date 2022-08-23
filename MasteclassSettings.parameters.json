@@ -41,9 +41,6 @@
     "availabilitySetName": {
       "value": "ACME-dc-advset1"
     },
-    "Location": {
-      "value": ""
-    },
     "dnsPrefix": {
       "value": "GEN-UNIQUE"
     }
