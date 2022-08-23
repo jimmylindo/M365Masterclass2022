@@ -3,50 +3,50 @@ param adminUsername string = 'sysadmin'
 
 @description('The password for the administrator account of the new VM and domain')
 @secure()
-param adminPassword string
+param adminPassword string = 'Passw0rd1234!'
 
 @description('The FQDN of the Active Directory Domain to be created')
 param domainName string = 'CORP.ACME.COM'
 
 @description('Size of the VM for the controller')
-param vmSize string = 'Standard_D2s_v3'
+param vmSize string = 'Standard_B2s'
 
 @description('The location of resources, such as templates and DSC modules, that the template depends on')
 param artifactsLocation string = deployment().properties.templateLink.uri
 
-@description('Auto-generated token to access _artifactsLocation. Leave it blank unless you need to provide your own value.')
-@secure()
-param artifactsLocationSasToken string = ''
 
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
 @description('Virtual machine name.')
-param virtualMachineName string = 'adVM'
+param virtualMachineName string = 'ACME-dc01'
 
 @description('Virtual network name.')
-param virtualNetworkName string = 'adVNET'
+param virtualNetworkName string = 'ACME-VNet1'
 
 @description('Virtual network address range.')
 param virtualNetworkAddressRange string = '10.0.0.0/16'
 
 @description('Network interface name.')
-param networkInterfaceName string = 'adNic'
+param networkInterfaceName string = 'ACME-dc01-nic1'
 
 @description('Private IP address.')
 param privateIPAddress string = '10.0.0.4'
 
 @description('Subnet name.')
-param subnetName string = 'adSubnet'
+param subnetName string = 'adds-subnet'
 
 @description('Subnet IP range.')
 param subnetRange string = '10.0.0.0/24'
 
 @description('Availability set name.')
-param availabilitySetName string = 'adAvailabiltySet'
+param availabilitySetName string = 'ACME-dc-advset1'
 
 @description('The location of resources such as templates and DSC modules that the script is dependent')
 param assetLocation_dc01 string = 'https://raw.githubusercontent.com/jimmylindo/M365Masterclass2022/main/ACME-DC01Config/'
+
+@description('The location of resources such as templates and DSC modules that the script is dependent')
+param assetLocation_CreateADForest string = 'https://raw.githubusercontent.com/jimmylindo/M365Masterclass2022/main/DSC/'
 
 resource availabilitySetName_resource 'Microsoft.Compute/availabilitySets@2019-03-01' = {
   location: location
@@ -156,7 +156,7 @@ resource virtualMachineName_CreateADForest 'Microsoft.Compute/virtualMachines/ex
     typeHandlerVersion: '2.19'
     autoUpgradeMinorVersion: false
     settings: {
-      ModulesUrl: uri(artifactsLocation, 'DSC/CreateADPDC.zip${artifactsLocationSasToken}')
+      ModulesUrl: '${assetLocation_CreateADForest}CreateADPDC.zip'
       ConfigurationFunction: 'CreateADPDC.ps1\\CreateADPDC'
       Properties: {
         DomainName: domainName
