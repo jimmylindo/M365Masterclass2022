@@ -305,7 +305,7 @@
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
                       "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]",
-                      "[concat('Microsoft.Compute/virtualMachines/',parameters('virtualMachineName'),'/extensions/CreateADPDC')]"
+                      "[concat('Microsoft.Compute/virtualMachines/',parameters('virtualMachineName'),'/extensions/CreateADForest')]"
                     ],
                     "properties": {
                       "publisher": "Microsoft.Compute",
