@@ -11,10 +11,6 @@ param domainName string = 'CORP.ACME.COM'
 @description('Size of the VM for the controller')
 param vmSize string = 'Standard_B2s'
 
-@description('The location of resources, such as templates and DSC modules, that the template depends on')
-param artifactsLocation string = deployment().properties.templateLink.uri
-
-
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
