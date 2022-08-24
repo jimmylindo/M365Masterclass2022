@@ -44,6 +44,7 @@ param assetLocation_dc01 string = 'https://raw.githubusercontent.com/jimmylindo/
 @description('The location of resources such as templates and DSC modules that the script is dependent')
 param assetLocation_CreateADForest string = 'https://raw.githubusercontent.com/jimmylindo/M365Masterclass2022/main/DSC/'
 
+
 resource availabilitySetName_resource 'Microsoft.Compute/availabilitySets@2019-03-01' = {
   location: location
   name: availabilitySetName
@@ -204,5 +205,19 @@ module UpdateVNetDNS './nestedtemplates/vnet-with-dns-server.bicep' /*TODO: repl
   }
   dependsOn: [
     virtualMachineName_CreateADForest
+  ]
+}
+
+module CreateACMECL01 './nestedtemplates/acme-cl01.bicep' ={
+  name: 'DeployCL01'
+  params: {
+    virtualNetworkName: virtualNetworkName
+    adminUsername: adminUsername
+    adminPassword: adminPassword
+    subnetName: subnetName
+    location: location
+  }
+  dependsOn: [
+    UpdateVNetDNS
   ]
 }
