@@ -221,3 +221,14 @@ module CreateACMECL01 './nestedtemplates/acme-cl01.bicep' ={
     UpdateVNetDNS
   ]
 }
+
+module CreateACMEME01 './nestedtemplates/acme-me01.bicep' = {
+  name: 'DeployME01'
+  params: {
+    virtualNetworkName: virtualMachineName
+    adminUsername: adminUsername
+    adminPassword: adminPassword
+    subnetName: subnetName
+    location: location
+  }
+}
