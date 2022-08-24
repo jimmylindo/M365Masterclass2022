@@ -225,10 +225,27 @@ module CreateACMECL01 './nestedtemplates/acme-cl01.bicep' ={
 module CreateACMEME01 './nestedtemplates/acme-me01.bicep' = {
   name: 'DeployME01'
   params: {
-    virtualNetworkName: virtualMachineName
+    virtualNetworkName: virtualNetworkName
     adminUsername: adminUsername
     adminPassword: adminPassword
     subnetName: subnetName
     location: location
   }
+  dependsOn: [
+    UpdateVNetDNS
+  ]
+}
+
+module CreateACMEstandalone './nestedtemplates/acme-standalone.bicep' = {
+  name: 'deployStandalone'
+  params: {
+    virtualNetworkName: virtualNetworkName
+    adminUsername: adminUsername
+    adminPassword: adminPassword
+    subnetName: subnetName
+    location: location
+  }
+  dependsOn: [
+    UpdateVNetDNS
+  ]
 }
