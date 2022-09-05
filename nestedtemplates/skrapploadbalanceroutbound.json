@@ -1,0 +1,192 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2021-05-01",
+            "name": "AzureVM-LB",
+            "location": "westeurope",
+            "dependsOn": [],
+            "tags": {},
+            "sku": {
+                "name": "Standard",
+                "tier": "Regional"
+            },
+            "properties": {
+                "provisioningState": "Succeeded",
+                "resourceGuid": "0e322455-87c4-484b-b2a8-63391f3a540d",
+                "frontendIPConfigurations": [
+                    {
+                        "name": "Frontend-config",
+                        "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/frontendIPConfigurations/Frontend-config",
+                        "etag": "W/\"687bf573-d600-438a-af7b-e94319c97fca\"",
+                        "type": "Microsoft.Network/loadBalancers/frontendIPConfigurations",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/publicIPAddresses/AzureVM-LB-PIP"
+                            },
+                            "inboundNatRules": [
+                                {
+                                    "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMEDC01-NATRuleRDP"
+                                },
+                                {
+                                    "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMECL01-NATRuleRDP"
+                                },
+                                {
+                                    "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMEME01-NATRuleRDP"
+                                },
+                                {
+                                    "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMEStandalone-NATRuleRDP"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "backendpool-config",
+                        "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/backendAddressPools/backendpool-config",
+                        "etag": "W/\"687bf573-d600-438a-af7b-e94319c97fca\"",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "loadBalancerBackendAddresses": [
+                                {
+                                    "name": "M365Masterclass_ACME-dc01-nic1ipconfig1",
+                                    "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/backendAddressPools/backendpool-config/loadBalancerBackendAddresses/M365Masterclass_ACME-dc01-nic1ipconfig1",
+                                    "etag": "W/\"687bf573-d600-438a-af7b-e94319c97fca\"",
+                                    "properties": {
+                                        "provisioningState": "Succeeded",
+                                        "networkInterfaceIPConfiguration": {
+                                            "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/networkInterfaces/ACME-dc01-nic1/ipConfigurations/ipconfig1"
+                                        },
+                                        "inboundNatRulesPortMapping": []
+                                    },
+                                    "type": "Microsoft.Network/loadBalancers/backendAddressPools/loadBalancerBackendAddresses"
+                                }
+                            ],
+                            "backendIPConfigurations": [
+                                {
+                                    "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/networkInterfaces/ACME-dc01-nic1/ipConfigurations/ipconfig1"
+                                }
+                            ]
+                        },
+                        "type": "Microsoft.Network/loadBalancers/backendAddressPools"
+                    }
+                ],
+                "loadBalancingRules": [],
+                "probes": [],
+                "inboundNatRules": [
+                    {
+                        "name": "ACMEDC01-NATRuleRDP",
+                        "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMEDC01-NATRuleRDP",
+                        "etag": "W/\"687bf573-d600-438a-af7b-e94319c97fca\"",
+                        "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "frontendIPConfiguration": {
+                                "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/frontendIPConfigurations/Frontend-config"
+                            },
+                            "frontendPort": 50001,
+                            "backendPort": 3389,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "enableDestinationServiceEndpoint": false,
+                            "enableTcpReset": false,
+                            "allowBackendPortConflict": false,
+                            "backendIPConfiguration": {
+                                "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/networkInterfaces/ACME-dc01-nic1/ipConfigurations/ipconfig1"
+                            }
+                        }
+                    },
+                    {
+                        "name": "ACMECL01-NATRuleRDP",
+                        "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMECL01-NATRuleRDP",
+                        "etag": "W/\"687bf573-d600-438a-af7b-e94319c97fca\"",
+                        "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "frontendIPConfiguration": {
+                                "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/frontendIPConfigurations/Frontend-config"
+                            },
+                            "frontendPort": 50002,
+                            "backendPort": 3389,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "enableDestinationServiceEndpoint": false,
+                            "enableTcpReset": false,
+                            "allowBackendPortConflict": false
+                        }
+                    },
+                    {
+                        "name": "ACMEME01-NATRuleRDP",
+                        "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMEME01-NATRuleRDP",
+                        "etag": "W/\"687bf573-d600-438a-af7b-e94319c97fca\"",
+                        "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "frontendIPConfiguration": {
+                                "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/frontendIPConfigurations/Frontend-config"
+                            },
+                            "frontendPort": 50003,
+                            "backendPort": 3389,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "enableDestinationServiceEndpoint": false,
+                            "enableTcpReset": false,
+                            "allowBackendPortConflict": false
+                        }
+                    },
+                    {
+                        "name": "ACMEStandalone-NATRuleRDP",
+                        "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/inboundNatRules/ACMEStandalone-NATRuleRDP",
+                        "etag": "W/\"687bf573-d600-438a-af7b-e94319c97fca\"",
+                        "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+                        "properties": {
+                            "provisioningState": "Succeeded",
+                            "frontendIPConfiguration": {
+                                "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/frontendIPConfigurations/Frontend-config"
+                            },
+                            "frontendPort": 50004,
+                            "backendPort": 3389,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "protocol": "Tcp",
+                            "enableDestinationServiceEndpoint": false,
+                            "enableTcpReset": false,
+                            "allowBackendPortConflict": false
+                        }
+                    }
+                ],
+                "outboundRules": [
+                    {
+                        "name": "All",
+                        "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/outboundRules/All",
+                        "properties": {
+                            "frontendIPConfigurations": [
+                                {
+                                    "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/frontendIPConfigurations/Frontend-config"
+                                }
+                            ],
+                            "backendAddressPool": {
+                                "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB/backendAddressPools/backendpool-config"
+                            },
+                            "protocol": "All",
+                            "enableTcpReset": true,
+                            "idleTimeoutInMinutes": 4,
+                            "allocatedOutboundPorts": 0
+                        }
+                    }
+                ],
+                "inboundNatPools": []
+            },
+            "id": "/subscriptions/bb085bcb-3ce2-4d4a-8e07-8c12e54cd4ed/resourceGroups/M365Masterclass/providers/Microsoft.Network/loadBalancers/AzureVM-LB"
+        }
+    ]
+}
