@@ -27,11 +27,19 @@ param virtualNetworkName string
 @description('Location for all resources.')
 param location string = resourceGroup().location
 
+@description('Loadbalancer')
+param lbname string
+
 var imagePublisher = 'MicrosoftWindowsDesktop'
 var imageOffer = 'windows-11'
 var windowsOSVersion = 'win11-21h2-entn'
 var ComputerName_var = 'ACME-CL01'
 var NetworkInterfaceName_var = 'ACME-CL01-Nic'
+var PrivateIP_var = '10.0.0.6'
+
+resource loadbalancer_resource 'Microsoft.Network/loadBalancers@2021-05-01' existing = {
+  name: lbname
+}
 
 resource networkInterfaceName 'Microsoft.Network/networkInterfaces@2019-02-01' = {
   name: NetworkInterfaceName_var
@@ -41,10 +49,21 @@ resource networkInterfaceName 'Microsoft.Network/networkInterfaces@2019-02-01' =
       {
         name: 'ipconfig1'
         properties: {
-          privateIPAllocationMethod: 'Dynamic'
+          privateIPAllocationMethod: 'Static'
+          privateIPAddress: PrivateIP_var
           subnet: {
             id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
           }
+          loadBalancerBackendAddressPools: [
+            {
+              id: '${loadbalancer_resource.id}/backendAddressPools/backendpool-config'
+            }
+          ]
+          loadBalancerInboundNatRules: [
+            {
+              id: '${loadbalancer_resource.id}/inboundNatRules/ACMECL01-NATRuleRDP'
+            }
+          ]
         }
       }
     ]
