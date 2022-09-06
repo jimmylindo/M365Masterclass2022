@@ -1,0 +1,1626 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "11538559868139114550"
+    }
+  },
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "sysadmin",
+      "metadata": {
+        "description": "The name of the administrator account of the new VM and domain"
+      }
+    },
+    "adminPassword": {
+      "type": "secureString",
+      "metadata": {
+        "description": "The password for the administrator account of the new VM and domain"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "CORP.ACME.COM",
+      "metadata": {
+        "description": "The FQDN of the Active Directory Domain to be created"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "Size of the VM for the controller"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "virtualMachineName": {
+      "type": "string",
+      "defaultValue": "ACME-dc01",
+      "metadata": {
+        "description": "Virtual machine name."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "ACME-VNet1",
+      "metadata": {
+        "description": "Virtual network name."
+      }
+    },
+    "virtualNetworkAddressRange": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Virtual network address range."
+      }
+    },
+    "networkInterfaceName": {
+      "type": "string",
+      "defaultValue": "ACME-dc01-nic1",
+      "metadata": {
+        "description": "Network interface name."
+      }
+    },
+    "privateIPAddress": {
+      "type": "string",
+      "defaultValue": "10.0.0.4",
+      "metadata": {
+        "description": "Private IP address."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": "adds-subnet",
+      "metadata": {
+        "description": "Subnet name."
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "defaultValue": "adds-subnet-NSG",
+      "metadata": {
+        "description": "Network Security Group for adds-subnet"
+      }
+    },
+    "subnetRange": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Subnet IP range."
+      }
+    },
+    "AzureVM_LB_PIP": {
+      "type": "string",
+      "defaultValue": "AzureVM-LB-PIP",
+      "metadata": {
+        "description": "Public IP for Loadbalancer"
+      }
+    },
+    "lbname": {
+      "type": "string",
+      "defaultValue": "AzureVM-LB",
+      "metadata": {
+        "description": "Name for loadbalancer for Azure VM"
+      }
+    },
+    "Frontend": {
+      "type": "string",
+      "defaultValue": "Frontend-config",
+      "metadata": {
+        "description": "Frontend config for loadbalancer for Azure VM"
+      }
+    },
+    "Backend": {
+      "type": "string",
+      "defaultValue": "backendpool-config",
+      "metadata": {
+        "description": "Backend config for loadbalancer for Azure VM"
+      }
+    },
+    "assetLocation_dc01": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/jimmylindo/M365Masterclass2022/main/ACME-DC01Config/",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      }
+    },
+    "assetLocation_CreateADForest": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/jimmylindo/M365Masterclass2022/main/DSC/",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      }
+    }
+  },
+  "functions": [],
+  "variables": {
+    "lb_sku": "Standard",
+    "lb_tier": "Regional"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2020-08-01",
+      "name": "[parameters('AzureVM_LB_PIP')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4,
+        "ipTags": [
+          {
+            "ipTagType": "RoutingPreference",
+            "tag": "Internet"
+          }
+        ]
+      },
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "zones": [
+        "3",
+        "2",
+        "1"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2021-05-01",
+      "name": "[parameters('lbname')]",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[parameters('Frontend')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('AzureVM_LB_PIP'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[parameters('Backend')]"
+          }
+        ],
+        "probes": [],
+        "loadBalancingRules": [],
+        "inboundNatRules": [],
+        "outboundRules": []
+      },
+      "sku": {
+        "name": "[variables('lb_sku')]",
+        "tier": "[variables('lb_tier')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('AzureVM_LB_PIP'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2019-02-01",
+      "name": "[parameters('networkInterfaceName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('privateIPAddress')]",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[format('{0}/backendAddressPools/backendpool-config', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[format('{0}/inboundNatRules/ACMEDC01-NATRuleRDP', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', parameters('lbname'))]",
+        "[resourceId('Microsoft.Resources/deployments', 'updateLoadbalancer')]",
+        "[resourceId('Microsoft.Resources/deployments', 'VNet')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2019-03-01",
+      "name": "[parameters('virtualMachineName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2022-datacenter-azure-edition",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "diskSizeGB": 50,
+              "lun": 0,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2019-03-01",
+      "name": "[format('{0}/{1}', parameters('virtualMachineName'), 'CreateADForest')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.19",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "ModulesUrl": "[format('{0}CreateADPDC.zip', parameters('assetLocation_CreateADForest'))]",
+          "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
+          "Properties": {
+            "DomainName": "[parameters('domainName')]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2015-06-15",
+      "name": "ACME-DC01/CustomScript",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.4",
+        "settings": {
+          "fileUris": [
+            "[format('{0}acme-dc01.ps1', parameters('assetLocation_dc01'))]"
+          ],
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File acme-dc01.ps1"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'CreateADForest')]",
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "VNet",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "subnetRange": {
+            "value": "[parameters('subnetRange')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "7339632749324760084"
+            }
+          },
+          "parameters": {
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Virtual Network to Create"
+              }
+            },
+            "virtualNetworkAddressRange": {
+              "type": "string",
+              "metadata": {
+                "description": "The address range of the new VNET in CIDR format"
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the subnet created in the new VNET"
+              }
+            },
+            "subnetRange": {
+              "type": "string",
+              "metadata": {
+                "description": "The address range of the subnet created in the new VNET"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-08-01",
+              "name": "[parameters('virtualNetworkName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('virtualNetworkAddressRange')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[parameters('subnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('subnetRange')]"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "UpdateVNetDNS",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "networkSecurityGroupName": {
+            "value": "[parameters('networkSecurityGroupName')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "subnetRange": {
+            "value": "[parameters('subnetRange')]"
+          },
+          "DNSServerAddress": {
+            "value": [
+              "[parameters('privateIPAddress')]"
+            ]
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "6473358135330323276"
+            }
+          },
+          "parameters": {
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the Virtual Network to Create"
+              }
+            },
+            "virtualNetworkAddressRange": {
+              "type": "string",
+              "metadata": {
+                "description": "The address range of the new VNET in CIDR format"
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the subnet created in the new VNET"
+              }
+            },
+            "subnetRange": {
+              "type": "string",
+              "metadata": {
+                "description": "The address range of the subnet created in the new VNET"
+              }
+            },
+            "DNSServerAddress": {
+              "type": "array",
+              "metadata": {
+                "description": "The DNS address(es) of the DNS Server(s) used by the VNET"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "networkSecurityGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "NSG name"
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2020-08-01",
+              "name": "[parameters('virtualNetworkName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('virtualNetworkAddressRange')]"
+                  ]
+                },
+                "dhcpOptions": {
+                  "dnsServers": "[parameters('DNSServerAddress')]"
+                },
+                "subnets": [
+                  {
+                    "name": "[parameters('subnetName')]",
+                    "properties": {
+                      "addressPrefix": "[parameters('subnetRange')]",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'CreateADForest')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "DeployADDSSubnetNSG",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "networkSecurityGroupName": {
+            "value": "[parameters('networkSecurityGroupName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "15611195593766913024"
+            }
+          },
+          "parameters": {
+            "networkSecurityGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "This is the name of the network security group"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location where the network security group resource will be created."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2019-02-01",
+              "name": "[parameters('networkSecurityGroupName')]",
+              "location": "[parameters('location')]",
+              "tags": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "UpdateNSGRules",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "networkSecurityGroupName": {
+            "value": "[parameters('networkSecurityGroupName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "4808633630146807237"
+            }
+          },
+          "parameters": {
+            "networkSecurityGroupName": {
+              "type": "string",
+              "metadata": {
+                "description": "Network Security Group for adds-subnet"
+              }
+            },
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Location where the network security group resource will be created."
+              }
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2020-11-01",
+              "name": "[parameters('networkSecurityGroupName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "securityRules": [
+                  {
+                    "name": "RDP_ACMEDC01",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "3389",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "10.0.0.4",
+                      "access": "Allow",
+                      "priority": 100,
+                      "direction": "Inbound",
+                      "sourcePortRanges": [],
+                      "destinationPortRanges": [],
+                      "sourceAddressPrefixes": [],
+                      "destinationAddressPrefixes": []
+                    }
+                  },
+                  {
+                    "name": "RDP_ACMEME01",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "3389",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "10.0.0.5",
+                      "access": "Allow",
+                      "priority": 110,
+                      "direction": "Inbound",
+                      "sourcePortRanges": [],
+                      "destinationPortRanges": [],
+                      "sourceAddressPrefixes": [],
+                      "destinationAddressPrefixes": []
+                    }
+                  },
+                  {
+                    "name": "RDP_ACMECL01",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "3389",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "10.0.0.6",
+                      "access": "Allow",
+                      "priority": 120,
+                      "direction": "Inbound",
+                      "sourcePortRanges": [],
+                      "destinationPortRanges": [],
+                      "sourceAddressPrefixes": [],
+                      "destinationAddressPrefixes": []
+                    }
+                  },
+                  {
+                    "name": "RDP_ACMEStandalone",
+                    "properties": {
+                      "protocol": "Tcp",
+                      "sourcePortRange": "*",
+                      "destinationPortRange": "3389",
+                      "sourceAddressPrefix": "*",
+                      "destinationAddressPrefix": "10.0.0.7",
+                      "access": "Allow",
+                      "priority": 130,
+                      "direction": "Inbound",
+                      "sourcePortRanges": [],
+                      "destinationPortRanges": [],
+                      "sourceAddressPrefixes": [],
+                      "destinationAddressPrefixes": []
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+              "apiVersion": "2020-11-01",
+              "name": "[format('{0}/{1}', parameters('networkSecurityGroupName'), 'RDP_ACMEDC01')]",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "3389",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "10.0.0.4",
+                "access": "Allow",
+                "priority": 100,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+              "apiVersion": "2020-11-01",
+              "name": "[format('{0}/{1}', parameters('networkSecurityGroupName'), 'RDP_ACMEME01')]",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "3389",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "10.0.0.5",
+                "access": "Allow",
+                "priority": 110,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+              "apiVersion": "2020-11-01",
+              "name": "[format('{0}/{1}', parameters('networkSecurityGroupName'), 'RDP_ACMECL01')]",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "3389",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "10.0.0.6",
+                "access": "Allow",
+                "priority": 120,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+              "apiVersion": "2020-11-01",
+              "name": "[format('{0}/{1}', parameters('networkSecurityGroupName'), 'RDP_ACMEStandalone')]",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "3389",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "10.0.0.7",
+                "access": "Allow",
+                "priority": 130,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "DeployCL01",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "lbname": {
+            "value": "[parameters('lbname')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "2240372274265692848"
+            }
+          },
+          "parameters": {
+            "vmSize": {
+              "type": "string",
+              "defaultValue": "Standard_B2s",
+              "metadata": {
+                "description": "Size of VM"
+              }
+            },
+            "domainToJoin": {
+              "type": "string",
+              "defaultValue": "corp.acme.com",
+              "metadata": {
+                "description": "The FQDN of the AD domain"
+              }
+            },
+            "ouPath": {
+              "type": "string",
+              "defaultValue": "OU=Computers; OU=ACME; DC=corp; DC=acme; DC=com",
+              "metadata": {
+                "description": "Organizational Unit path in which the nodes and cluster will be present."
+              }
+            },
+            "domainJoinOptions": {
+              "type": "int",
+              "defaultValue": 3,
+              "metadata": {
+                "description": "Set of bit flags that define the join options. Default value of 3 is a combination of NETSETUP_JOIN_DOMAIN (0x00000001) & NETSETUP_ACCT_CREATE (0x00000002) i.e. will join the domain and create the account on the domain. For more information see https://msdn.microsoft.com/en-us/library/aa392154(v=vs.85).aspx"
+              }
+            },
+            "adminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the administrator of the new VM."
+              }
+            },
+            "adminPassword": {
+              "type": "secureString",
+              "metadata": {
+                "description": "The password for the administrator account of the new VM."
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Subnet name."
+              }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual network name."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "lbname": {
+              "type": "string",
+              "metadata": {
+                "description": "Loadbalancer"
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "imagePublisher": "MicrosoftWindowsDesktop",
+            "imageOffer": "windows-11",
+            "windowsOSVersion": "win11-21h2-entn",
+            "ComputerName_var": "ACME-CL01",
+            "NetworkInterfaceName_var": "ACME-CL01-Nic",
+            "PrivateIP_var": "10.0.0.6"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2019-02-01",
+              "name": "[variables('NetworkInterfaceName_var')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[variables('PrivateIP_var')]",
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                      },
+                      "loadBalancerBackendAddressPools": [
+                        {
+                          "id": "[format('{0}/backendAddressPools/backendpool-config', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                        }
+                      ],
+                      "loadBalancerInboundNatRules": [
+                        {
+                          "id": "[format('{0}/inboundNatRules/ACMECL01-NATRuleRDP', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-03-01",
+              "name": "[variables('ComputerName_var')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[variables('ComputerName_var')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "[variables('imagePublisher')]",
+                    "offer": "[variables('imageOffer')]",
+                    "sku": "[variables('windowsOSVersion')]",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "createOption": "FromImage"
+                  },
+                  "dataDisks": [
+                    {
+                      "diskSizeGB": 50,
+                      "lun": 0,
+                      "createOption": "Empty"
+                    }
+                  ]
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('NetworkInterfaceName_var'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('NetworkInterfaceName_var'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2021-03-01",
+              "name": "ACME-CL01/JoinDomain",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "JsonADDomainExtension",
+                "typeHandlerVersion": "1.3",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "name": "[parameters('domainToJoin')]",
+                  "ouPath": "[parameters('ouPath')]",
+                  "user": "[format('{0}\\{1}', parameters('domainToJoin'), parameters('adminUsername'))]",
+                  "restart": true,
+                  "options": "[parameters('domainJoinOptions')]"
+                },
+                "protectedSettings": {
+                  "Password": "[parameters('adminPassword')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('ComputerName_var'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "DeployME01",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "lbname": {
+            "value": "[parameters('lbname')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "2301356195472599523"
+            }
+          },
+          "parameters": {
+            "vmSize": {
+              "type": "string",
+              "defaultValue": "Standard_B2s",
+              "metadata": {
+                "description": "Size of VM"
+              }
+            },
+            "domainToJoin": {
+              "type": "string",
+              "defaultValue": "corp.acme.com",
+              "metadata": {
+                "description": "The FQDN of the AD domain"
+              }
+            },
+            "ouPath": {
+              "type": "string",
+              "defaultValue": "OU=Servers; OU=ACME; DC=corp; DC=acme; DC=com",
+              "metadata": {
+                "description": "Organizational Unit path in which the nodes and cluster will be present."
+              }
+            },
+            "domainJoinOptions": {
+              "type": "int",
+              "defaultValue": 3,
+              "metadata": {
+                "description": "Set of bit flags that define the join options. Default value of 3 is a combination of NETSETUP_JOIN_DOMAIN (0x00000001) & NETSETUP_ACCT_CREATE (0x00000002) i.e. will join the domain and create the account on the domain. For more information see https://msdn.microsoft.com/en-us/library/aa392154(v=vs.85).aspx"
+              }
+            },
+            "adminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the administrator of the new VM."
+              }
+            },
+            "adminPassword": {
+              "type": "secureString",
+              "metadata": {
+                "description": "The password for the administrator account of the new VM."
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Subnet name."
+              }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual network name."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "lbname": {
+              "type": "string",
+              "metadata": {
+                "description": "Loadbalancer"
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "imagePublisher": "MicrosoftWindowsServer",
+            "imageOffer": "WindowsServer",
+            "windowsOSVersion": "2022-datacenter-azure-edition",
+            "ComputerName_var": "acme-me01",
+            "NetworkInterfaceName_var": "acme-me01-Nic",
+            "PrivateIP_var": "10.0.0.5"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2019-02-01",
+              "name": "[variables('NetworkInterfaceName_var')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[variables('PrivateIP_var')]",
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                      },
+                      "loadBalancerBackendAddressPools": [
+                        {
+                          "id": "[format('{0}/backendAddressPools/backendpool-config', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                        }
+                      ],
+                      "loadBalancerInboundNatRules": [
+                        {
+                          "id": "[format('{0}/inboundNatRules/ACMEME01-NATRuleRDP', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-03-01",
+              "name": "[variables('ComputerName_var')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[variables('ComputerName_var')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "[variables('imagePublisher')]",
+                    "offer": "[variables('imageOffer')]",
+                    "sku": "[variables('windowsOSVersion')]",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "createOption": "FromImage"
+                  },
+                  "dataDisks": [
+                    {
+                      "diskSizeGB": 50,
+                      "lun": 0,
+                      "createOption": "Empty"
+                    }
+                  ]
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('NetworkInterfaceName_var'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('NetworkInterfaceName_var'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "apiVersion": "2021-03-01",
+              "name": "acme-me01/JoinDomain",
+              "location": "[parameters('location')]",
+              "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "JsonADDomainExtension",
+                "typeHandlerVersion": "1.3",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "name": "[parameters('domainToJoin')]",
+                  "ouPath": "[parameters('ouPath')]",
+                  "user": "[format('{0}\\{1}', parameters('domainToJoin'), parameters('adminUsername'))]",
+                  "restart": true,
+                  "options": "[parameters('domainJoinOptions')]"
+                },
+                "protectedSettings": {
+                  "Password": "[parameters('adminPassword')]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('ComputerName_var'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "deployStandalone",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnetName": {
+            "value": "[parameters('subnetName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "lbname": {
+            "value": "[parameters('lbname')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "12251840662061854105"
+            }
+          },
+          "parameters": {
+            "vmSize": {
+              "type": "string",
+              "defaultValue": "Standard_B2s",
+              "metadata": {
+                "description": "Size of VM"
+              }
+            },
+            "adminUsername": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the administrator of the new VM."
+              }
+            },
+            "adminPassword": {
+              "type": "secureString",
+              "metadata": {
+                "description": "The password for the administrator account of the new VM."
+              }
+            },
+            "subnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "Subnet name."
+              }
+            },
+            "virtualNetworkName": {
+              "type": "string",
+              "metadata": {
+                "description": "Virtual network name."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location for all resources."
+              }
+            },
+            "lbname": {
+              "type": "string",
+              "metadata": {
+                "description": "Loadbalancer"
+              }
+            }
+          },
+          "functions": [],
+          "variables": {
+            "imagePublisher": "MicrosoftWindowsDesktop",
+            "imageOffer": "windows-11",
+            "windowsOSVersion": "win11-21h2-entn",
+            "ComputerName_var": "ACME-standalone",
+            "NetworkInterfaceName_var": "acme-standalone-Nic",
+            "PrivateIP_var": "10.0.0.7"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkInterfaces",
+              "apiVersion": "2019-02-01",
+              "name": "[variables('NetworkInterfaceName_var')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "ipConfigurations": [
+                  {
+                    "name": "ipconfig1",
+                    "properties": {
+                      "privateIPAllocationMethod": "Static",
+                      "privateIPAddress": "[variables('PrivateIP_var')]",
+                      "subnet": {
+                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]"
+                      },
+                      "loadBalancerBackendAddressPools": [
+                        {
+                          "id": "[format('{0}/backendAddressPools/backendpool-config', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                        }
+                      ],
+                      "loadBalancerInboundNatRules": [
+                        {
+                          "id": "[format('{0}/inboundNatRules/ACMEStandalone-NATRuleRDP', resourceId('Microsoft.Network/loadBalancers', parameters('lbname')))]"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Compute/virtualMachines",
+              "apiVersion": "2021-03-01",
+              "name": "[variables('ComputerName_var')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "hardwareProfile": {
+                  "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                  "computerName": "[variables('ComputerName_var')]",
+                  "adminUsername": "[parameters('adminUsername')]",
+                  "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                    "publisher": "[variables('imagePublisher')]",
+                    "offer": "[variables('imageOffer')]",
+                    "sku": "[variables('windowsOSVersion')]",
+                    "version": "latest"
+                  },
+                  "osDisk": {
+                    "createOption": "FromImage"
+                  },
+                  "dataDisks": [
+                    {
+                      "diskSizeGB": 50,
+                      "lun": 0,
+                      "createOption": "Empty"
+                    }
+                  ]
+                },
+                "networkProfile": {
+                  "networkInterfaces": [
+                    {
+                      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('NetworkInterfaceName_var'))]"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('NetworkInterfaceName_var'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'UpdateVNetDNS')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "updateLoadbalancer",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "lbname": {
+            "value": "[parameters('lbname')]"
+          },
+          "AzureVM_LB_PIP": {
+            "value": "[parameters('AzureVM_LB_PIP')]"
+          },
+          "Backend": {
+            "value": "[parameters('Backend')]"
+          },
+          "Frontend": {
+            "value": "[parameters('Frontend')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.613.9944",
+              "templateHash": "14896863747896941132"
+            }
+          },
+          "parameters": {
+            "lbname": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "AzureVM_LB_PIP": {
+              "type": "string"
+            },
+            "Frontend": {
+              "type": "string"
+            },
+            "Backend": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "variables": {
+            "sku": "Standard",
+            "tier": "Regional"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/loadBalancers",
+              "apiVersion": "2021-05-01",
+              "name": "[parameters('lbname')]",
+              "location": "[parameters('location')]",
+              "tags": {},
+              "properties": {
+                "frontendIPConfigurations": [
+                  {
+                    "name": "[parameters('Frontend')]",
+                    "properties": {
+                      "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('AzureVM_LB_PIP'))]"
+                      }
+                    }
+                  }
+                ],
+                "backendAddressPools": [
+                  {
+                    "name": "[parameters('Backend')]"
+                  }
+                ],
+                "probes": [],
+                "loadBalancingRules": [],
+                "inboundNatRules": [
+                  {
+                    "name": "ACMEDC01-NATRuleRDP",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', parameters('lbname'), 'Frontend-config')]"
+                      },
+                      "backendPort": 3389,
+                      "enableFloatingIP": false,
+                      "idleTimeoutInMinutes": 4,
+                      "protocol": "TCP",
+                      "enableTcpReset": false,
+                      "frontendPort": 50001
+                    }
+                  },
+                  {
+                    "name": "ACMECL01-NATRuleRDP",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', parameters('lbname'), 'Frontend-config')]"
+                      },
+                      "backendPort": 3389,
+                      "enableFloatingIP": false,
+                      "idleTimeoutInMinutes": 4,
+                      "protocol": "TCP",
+                      "enableTcpReset": false,
+                      "frontendPort": 50002
+                    }
+                  },
+                  {
+                    "name": "ACMEME01-NATRuleRDP",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', parameters('lbname'), 'Frontend-config')]"
+                      },
+                      "backendPort": 3389,
+                      "enableFloatingIP": false,
+                      "idleTimeoutInMinutes": 4,
+                      "protocol": "TCP",
+                      "enableTcpReset": false,
+                      "frontendPort": 50003
+                    }
+                  },
+                  {
+                    "name": "ACMEStandalone-NATRuleRDP",
+                    "properties": {
+                      "frontendIPConfiguration": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', parameters('lbname'), 'Frontend-config')]"
+                      },
+                      "backendPort": 3389,
+                      "enableFloatingIP": false,
+                      "idleTimeoutInMinutes": 4,
+                      "protocol": "TCP",
+                      "enableTcpReset": false,
+                      "frontendPort": 50004
+                    }
+                  }
+                ],
+                "outboundRules": [
+                  {
+                    "name": "Internet-Access",
+                    "properties": {
+                      "frontendIPConfigurations": [
+                        {
+                          "id": "[resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', parameters('lbname'), 'Frontend-config')]"
+                        }
+                      ],
+                      "backendAddressPool": {
+                        "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', parameters('lbname'), 'backendpool-config')]"
+                      },
+                      "protocol": "All",
+                      "enableTcpReset": true,
+                      "idleTimeoutInMinutes": 4,
+                      "allocatedOutboundPorts": 0
+                    }
+                  }
+                ]
+              },
+              "sku": {
+                "name": "[variables('sku')]",
+                "tier": "[variables('tier')]"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/loadBalancers', parameters('lbname'))]"
+      ]
+    }
+  ]
+}
