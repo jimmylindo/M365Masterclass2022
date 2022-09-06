@@ -38,7 +38,8 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "WestEurope",
+      "defaultValue": "westeurope",
+
       "metadata": {
         "description": "Location for all resources."
       }
