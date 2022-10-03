@@ -268,14 +268,7 @@
           },
           "osDisk": {
             "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "diskSizeGB": 50,
-              "lun": 0,
-              "createOption": "Empty"
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -999,14 +992,7 @@
                   },
                   "osDisk": {
                     "createOption": "FromImage"
-                  },
-                  "dataDisks": [
-                    {
-                      "diskSizeGB": 50,
-                      "lun": 0,
-                      "createOption": "Empty"
-                    }
-                  ]
+                  }
                 },
                 "networkProfile": {
                   "networkInterfaces": [
@@ -1221,14 +1207,7 @@
                   },
                   "osDisk": {
                     "createOption": "FromImage"
-                  },
-                  "dataDisks": [
-                    {
-                      "diskSizeGB": 50,
-                      "lun": 0,
-                      "createOption": "Empty"
-                    }
-                  ]
+                  }
                 },
                 "networkProfile": {
                   "networkInterfaces": [
@@ -1422,14 +1401,7 @@
                   },
                   "osDisk": {
                     "createOption": "FromImage"
-                  },
-                  "dataDisks": [
-                    {
-                      "diskSizeGB": 50,
-                      "lun": 0,
-                      "createOption": "Empty"
-                    }
-                  ]
+                  }
                 },
                 "networkProfile": {
                   "networkInterfaces": [
