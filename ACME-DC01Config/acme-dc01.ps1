@@ -1,12 +1,12 @@
 ﻿New-Item -Path c:\ -Name temp -Type Directory
 #ladda hem användarlista
-Invoke-WebRequest -Uri https://raw.githubusercontent.com/jimmylindo/M365MasterClass/master/FirstLastEurope.csv -OutFile C:\temp\FirstLastEurope.csv -UseBasicParsing
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/jimmylindo/M365Masterclass2022/main/ACME-DC01Config/FirstLastEurope.csv -OutFile C:\temp\FirstLastEurope.csv -UseBasicParsing
 
 #Skapa Share för användare
 New-SmbShare -name resources -Path C:\temp -FullAccess "corp\Domain Users"
 
 #Download labfiles
-            Start-BitsTransfer -Source https://raw.githubusercontent.com/jimmylindo/M365MasterClass/master/Labfiles.zip -Destination C:\Temp
+            Start-BitsTransfer -Source https://github.com/jimmylindo/M365Masterclass2022/raw/main/ACME-DC01Config/Labfiles.zip -Destination C:\Temp
             Expand-Archive -Path "c:\temp\labfiles.zip" -DestinationPath C:\temp
 
 #Installera roller och OU struktur
@@ -23,7 +23,7 @@ New-SmbShare -name resources -Path C:\temp -FullAccess "corp\Domain Users"
             $GPO = New-GPO -Name "Computer - Local administrator"
             $domain = Get-ADDomain
 
-            Start-BitsTransfer -Source https://raw.githubusercontent.com/jimmylindo/M365MasterClass/master/LocalGPO.zip -Destination C:\Temp
+            Start-BitsTransfer -Source https://github.com/jimmylindo/M365Masterclass2022/raw/main/ACME-DC01Config/LocalGPO.zip -Destination C:\Temp
             Expand-Archive -Path "c:\temp\localgpo.zip" -DestinationPath C:\temp\localgpo
             Import-GPO -Path C:\temp\localgpo\JimmyTest -BackupId 45F24E2C-5826-4C62-9AF2-55E462B0774A -TargetGuid $GPO.Id -Domain $domain.Forest
             New-GPLink -Name $gpo.DisplayName -Target "OU=Computers,OU=ACME,DC=corp,DC=acme,DC=com" 
